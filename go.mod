@@ -2,10 +2,12 @@ module github.com/openvex/vexctl
 
 go 1.20
 
+replace github.com/openvex/go-vex => ../go-vex/
+
 require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/in-toto/in-toto-golang v0.9.0
-	github.com/openvex/go-vex v0.2.1
+	github.com/openvex/go-vex v0.2.2-0.20230816044944-0eda62760a6e
 	github.com/owenrumney/go-sarif v1.1.1
 	github.com/secure-systems-lab/go-securesystemslib v0.7.0
 	github.com/sigstore/cosign/v2 v2.1.1
