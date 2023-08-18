@@ -18,12 +18,15 @@ import (
 type createOptions struct {
 	vexDocOptions
 	vexStatementOptions
-	outFilePath string
+	outFileOption
 }
 
 // Validates the options in context with arguments
 func (o *createOptions) Validate() error {
 	if err := o.vexStatementOptions.Validate(); err != nil {
+		return err
+	}
+	if err := o.outFileOption.Validate(); err != nil {
 		return err
 	}
 	return o.vexDocOptions.Validate()
@@ -32,13 +35,7 @@ func (o *createOptions) Validate() error {
 func (o *createOptions) AddFlags(cmd *cobra.Command) {
 	o.vexDocOptions.AddFlags(cmd)
 	o.vexStatementOptions.AddFlags(cmd)
-
-	cmd.PersistentFlags().StringVar(
-		&o.outFilePath,
-		"file",
-		"",
-		"file to write the document to (default is STDOUT)",
-	)
+	o.outFileOption.AddFlags(cmd)
 }
 
 func addCreate(parentCmd *cobra.Command) {
