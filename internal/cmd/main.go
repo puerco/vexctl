@@ -50,6 +50,7 @@ func init() {
 	)
 
 	addFilter(rootCmd)
+	addShow(rootCmd)
 	addAttest(rootCmd)
 	addMerge(rootCmd)
 	addCreate(rootCmd)

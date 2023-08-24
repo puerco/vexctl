@@ -8,7 +8,10 @@ package ctl
 import (
 	"context"
 	"fmt"
+	"io"
+	"time"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/openvex/go-vex/pkg/sarif"
 	"github.com/openvex/go-vex/pkg/vex"
 	"github.com/sirupsen/logrus"
@@ -177,4 +180,155 @@ func (vexctl *VexCtl) MergeFiles(ctx context.Context, opts *MergeOptions, filePa
 		return nil, fmt.Errorf("merging %d documents: %w", len(vexes), err)
 	}
 	return doc, nil
+}
+
+type flatStatements map[vex.VulnerabilityID]map[string]map[string]statusAndTime
+
+// Effective returns the effective statements from the flattenedList
+func (fs flatStatements) Effective() flatStatements {
+	ret := flatStatements{}
+	for v := range fs {
+		if _, ok := ret[v]; !ok {
+			ret[v] = make(map[string]map[string]statusAndTime)
+		}
+		for p := range fs[v] {
+			if _, ok := ret[v][p]; !ok {
+				ret[v][p] = make(map[string]statusAndTime)
+			}
+			for sc := range fs[v][p] {
+				if _, ok := ret[v][p][sc]; ok {
+					if ret[v][p][sc].timestamp.Before(*fs[v][p][sc].timestamp) {
+						ret[v][p][sc] = fs[v][p][sc]
+					}
+				} else {
+					ret[v][p][sc] = fs[v][p][sc]
+				}
+			}
+		}
+	}
+	return ret
+}
+
+type statusAndTime = struct {
+	status    vex.Status
+	timestamp *time.Time
+}
+
+func flattenStatements(statements []vex.Statement) flatStatements {
+	data := flatStatements{}
+
+	for _, s := range statements {
+		t := s.Timestamp
+		if s.LastUpdated != nil {
+			t = s.LastUpdated
+		}
+		if _, ok := data[s.Vulnerability.Name]; !ok {
+			data[s.Vulnerability.Name] = make(map[string]map[string]statusAndTime)
+		}
+
+		for i := range s.Products {
+			if _, ok := data[s.Vulnerability.Name][s.Products[i].ID]; !ok {
+				data[s.Vulnerability.Name][s.Products[i].ID] = make(map[string]statusAndTime)
+			}
+
+			// If no subcomponents are defined, are an entry with an empty one
+			if len(s.Products[i].Subcomponents) == 0 {
+				data[s.Vulnerability.Name][s.Products[i].ID][""] = statusAndTime{
+					status:    s.Status,
+					timestamp: t,
+				}
+			}
+			for j := range s.Products[i].Subcomponents {
+
+				data[s.Vulnerability.Name][s.Products[i].ID][s.Products[i].Subcomponents[j].ID] = statusAndTime{
+					status:    s.Status,
+					timestamp: t,
+				}
+			}
+		}
+	}
+	return data
+}
+
+func NewQueryFilter() QueryFilter {
+	return QueryFilter{
+		Include: QueryParams{
+			Vulnerability: []string{},
+			Product:       []string{},
+		},
+		Exclude: QueryParams{
+			Vulnerability: []string{},
+			Product:       []string{},
+		},
+	}
+}
+
+type QueryFilter struct {
+	Include QueryParams
+	Exclude QueryParams
+}
+
+type QueryParams struct {
+	Vulnerability []string
+	Product       []string
+}
+
+func PrintStatusTable(statements []vex.Statement, w io.Writer) {
+	t := table.NewWriter()
+	t.SetOutputMirror(w)
+	t.AppendHeader(table.Row{"Vulnerability", "Product", "VEX Status"})
+	rows := []table.Row{}
+
+	// Flatten the statement data
+	data := flattenStatements(statements).Effective()
+
+	// Now, recycle everything to group by vuln-status-product
+	rawdata := map[vex.VulnerabilityID]map[vex.Status]map[string][]string{}
+	for v := range data {
+		if _, ok := rawdata[v]; !ok {
+			rawdata[v] = make(map[vex.Status]map[string][]string)
+		}
+		for p := range data[v] {
+			for sc := range data[v][p] {
+				if _, ok := rawdata[v][data[v][p][sc].status]; !ok {
+					rawdata[v][data[v][p][sc].status] = make(map[string][]string)
+				}
+				if _, ok := rawdata[v][data[v][p][sc].status][p]; !ok {
+					rawdata[v][data[v][p][sc].status][p] = make([]string, 0)
+				}
+				rawdata[v][data[v][p][sc].status][p] = append(rawdata[v][data[v][p][sc].status][p], sc)
+			}
+		}
+	}
+
+	for v := range rawdata {
+		for s := range rawdata[v] {
+			for p := range rawdata[v][s] {
+				productString := p
+				addBlank := false
+				for _, sc := range rawdata[v][s][p] {
+					if sc == "" {
+						addBlank = true
+					} else {
+						productString += fmt.Sprintf("\n - %s", sc)
+					}
+				}
+
+				// If there is an entry with no subcomponents, we add it in a
+				// line by itself to make it clear
+				if addBlank {
+					rows = append(rows, table.Row{
+						v, p, s,
+					})
+				}
+				rows = append(rows, table.Row{
+					v, productString, s,
+				})
+
+			}
+		}
+	}
+
+	t.AppendRows(rows)
+	t.Render()
 }
