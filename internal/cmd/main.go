@@ -55,6 +55,7 @@ func init() {
 	addCreate(rootCmd)
 	addList(rootCmd)
 	addAdd(rootCmd)
+	addSBOM(rootCmd)
 	rootCmd.AddCommand(version.WithFont("doom"))
 }
 
