@@ -3,7 +3,8 @@ module github.com/openvex/vexctl
 go 1.22
 
 require (
-	github.com/google/go-containerregistry v0.19.2
+	github.com/bom-squad/protobom v0.3.0
+	github.com/google/go-containerregistry v0.19.1
 	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/openvex/go-vex v0.2.5
 	github.com/owenrumney/go-sarif v1.1.1
@@ -29,6 +30,7 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/CycloneDX/cyclonedx-go v0.8.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
@@ -43,6 +45,7 @@ require (
 	github.com/alibabacloud-go/tea-utils v1.4.5 // indirect
 	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
 	github.com/aliyun/credentials-go v1.3.1 // indirect
+	github.com/anchore/go-struct-converter v0.0.0-20230627203149-c72ef8859ca9 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.26.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.9 // indirect
@@ -151,6 +154,7 @@ require (
 	github.com/sigstore/timestamp-authority v1.2.2 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/spdx/tools-golang v0.5.3 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
