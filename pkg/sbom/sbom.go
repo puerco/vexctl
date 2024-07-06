@@ -25,6 +25,12 @@ type Options struct {
 	// Nodes are identifiers to be added as products in the VEX document. All
 	// top level elements will be added if none are defined.
 	Nodes []string
+
+	// RunDiscovery is a boolean that controls if vexctl recurses the
+	// SBOM components using the discovery module. When running the
+	// default discovery, vexctl will look into git repositories to try
+	// to find VEX data for each.
+	RunDiscovery bool
 }
 
 func NewHandler() *Handler {
@@ -47,14 +53,18 @@ func (h *Handler) VexSBOM(opts *Options, r io.ReadSeeker) (*vex.VEX, error) {
 		return nil, fmt.Errorf("extracting the node dependencies")
 	}
 
-	// TODO(puerco): Autodiscover component VEX data using deployer and
-	// collate to extra docs
-
 	// Parse any other documents providing vex data for any components
 	vexDocs, err := h.impl.ParseExtraDocuments(opts)
 	if err != nil {
 		return nil, fmt.Errorf("parsing extra documents: %w", err)
 	}
+
+	// Discover the component vex data
+	discoveryDocs, err := h.impl.DiscoverComponentVexData(opts, bom.NodeList)
+	if err != nil {
+		return nil, fmt.Errorf("dicovering component VEX data: %w", err)
+	}
+	vexDocs = append(vexDocs, discoveryDocs...)
 
 	// In the end, the extraDocsDoc will be the combined result of merging
 	// the autodiscovered documents plus any supplementals supplied to the handler

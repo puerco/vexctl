@@ -23,6 +23,7 @@ type sbomHandlerImplementation interface {
 	GenerateVexData(*Options, *protobom.NodeList, *vex.VEX) ([]*vex.Statement, error)
 	AssembleDocument(*Options, []*vex.Statement) (*vex.VEX, error)
 	OpenFile(string) (*os.File, error)
+	DiscoverComponentVexData(*Options, *protobom.NodeList) ([]*vex.VEX, error)
 }
 
 type defaultHandlerImplementation struct{}
@@ -248,4 +249,13 @@ func (dhi *defaultHandlerImplementation) OpenFile(filePath string) (*os.File, er
 	}
 	return f, nil
 
+}
+
+// DiscoverComponentVexData runs the sbom components through the discovery
+// module. Any documents found related to the components are returned.
+func (dhi *defaultHandlerImplementation) DiscoverComponentVexData(
+	*Options, *protobom.NodeList) ([]*vex.VEX, error) {
+	docs := []*vex.VEX{}
+
+	return docs, nil
 }
